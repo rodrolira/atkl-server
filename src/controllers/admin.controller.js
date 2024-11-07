@@ -48,6 +48,15 @@ export const findAdminByUsername = async (username) => {
   }
 }
 
+
+export const getAllAdmins = async () => {
+  try {
+    return await Admin.findAll();
+  } catch (error) {
+    throw new Error(`Error fetching admins: ${error.message}`);
+  }
+}
+
 export const loginAdmin = async (username, password) => {
   try {
     const admin = await Admin.findOne({ where: { username } })
