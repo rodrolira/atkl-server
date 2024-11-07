@@ -30,7 +30,6 @@ router.post('/admin/login', async (req, res) => {
     const admin = await adminController.findAdminByUsername(username)
 
     res.cookie('token', token, {
-      httpOnly: true,
       maxAge: 12 * 60 * 60 * 1000, // 12hrs
     })
 
@@ -66,4 +65,7 @@ router.get('/admin/verify', async (req, res) => {
     res.status(401).json({ message: 'Unauthorized' })
   }
 })
+
+router.delete('/admin/:username', adminController.deleteAdmin)
+
 export default router

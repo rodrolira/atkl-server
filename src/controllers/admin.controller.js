@@ -116,3 +116,24 @@ export const logoutAdmin = async (req, res) => {
     res.status(500).json({ message: `Error logging out: ${error.message}` })
   }
 }
+
+
+export const deleteAdmin = async (req, res) => {
+  try {
+    const { username } = req.params
+    const admin = await Admin.findByPk(username)
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' })
+    }
+    // Eliminar el admin de la base de datos
+    await Admin.destroy({
+      where: {
+        username
+      }
+    })
+    res.status(200).json({ message: 'Admin deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting admin:', error)
+    res.status(500).json({ message: 'Server Error' })
+  }
+}
