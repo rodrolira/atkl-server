@@ -47,7 +47,7 @@ const upload = multer({ storage })
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Lista de origenes permitidos prodccion y desarrollo
-const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app']
+const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'https://atkl.onrender.com']
 
 app.use(cors({
   origin: (origin, callback) => {
