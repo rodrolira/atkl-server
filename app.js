@@ -66,10 +66,10 @@ app.use(cors({
   exposedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-app.use(express.static(path.join(__dirname, 'build')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
+  res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
 });
 
 app.use(morgan('dev'))
