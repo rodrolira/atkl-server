@@ -15,10 +15,10 @@ export const createAdmin = async ({ username, email, password }) => {
   const hashedPassword = await bcrypt.hash(password, 10)
   try {
     return await Admin.create({
-            username,
-            email,
-          password: hashedPassword,
-        });
+      username,
+      email,
+      password: hashedPassword,
+    });
   } catch (error) {
     throw new Error(`Error creating admin: ${error.message}`)
   }
@@ -80,7 +80,7 @@ export const profileAdmin = async (adminId) => {
     if (!admin) {
       throw new Error('Admin not found')
     }
-    
+
     return admin
   } catch (error) {
     throw new Error(`Error fetching admin profile: ${error.message}`)
@@ -105,7 +105,7 @@ export const verifyTokenAdmin = async (token) => {
   } catch (error) {
     throw new Error(`Error verifying token: ${error.message}`);
   }
-    }
+}
 
 
 export const logoutAdmin = async (req, res) => {
