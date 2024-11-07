@@ -13,9 +13,9 @@ sequelize
   .then(() => {
     console.log('Database synchronized')
     // Iniciar el servidor aquí...
-    app.listen(process.env.PORT, {host: host, port: process.env.PORT}, () => {
-      console.log('Server is running on port', process.env.PORT)
-    })
+    app.listen(process.env.PORT || 3000, host, () => {
+      console.log(`Server is running on port ${process.env.PORT || 3000}`);
+    });
   })
   .catch((error) => {
     console.error('Error synchronizing database:', error)

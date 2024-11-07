@@ -47,7 +47,7 @@ const upload = multer({ storage })
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Lista de origenes permitidos prodccion y desarrollo
-const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'https://atkl.onrender.com']
+const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app']
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -81,19 +81,22 @@ app.use('/api', rolesRouter)
 app.use('/api', discographyRoutes)
 
 
-// Middleware para manejo de errores
-app.use((err, req, res) => {
-  console.log(err)
-  const status = err.status || 500
-  const message = err.message || 'Something went wrong'
-  res.status(status).send(message)
-})
-
 // Middleware para manejo de rutas no encontradas
 app.use((req, res) => {
-  res.status(404).json({ error: 'Page not found' })
-})
+  res.status(404).json({ error: 'Page not found' });
+});
 
+// Middleware para manejar errores
+app.use((err, req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+  console.error(err.stack); // Log del error para depuración
+  }
+  res.status(err.status || 500).json({
+    error: {
+      message: err.message,
+    },
+  });
+});
 
 
 export default app
