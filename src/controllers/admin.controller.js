@@ -53,10 +53,12 @@ export const loginAdmin = async (username, password) => {
     const admin = await Admin.findOne({ where: { username } })
 
     if (!admin) {
+      console.log('Admin not found for username:', username);
       throw new Error('Admin not found')
     }
 
     const isMatch = await bcrypt.compare(password, admin.password)
+    console.log('Password match status:', isMatch); // Check if passwords match
 
     if (!isMatch) {
       throw new Error('Invalid credentials')
