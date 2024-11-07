@@ -17,20 +17,12 @@ import postgres from 'postgres'
 import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url';
-import { v2 as cloudinary } from 'cloudinary';
 
 dotenv.config()
 
 // Crear __dirname en un modulo ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-cloudinary.config({
-  cloud_name: 'dotfwyxwr',
-  api_key: '434532883233174',
-  api_secret: process.env.CLOUDINARY_API_SECRET, // Click 'View API Keys' above to copy your API secret
-  secure: true
-});
 
 
 
