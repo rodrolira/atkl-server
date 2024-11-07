@@ -66,11 +66,13 @@ app.use(cors({
   exposedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, '../client/dist')));
 
+// Ruta para manejar solicitudes a index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
+
 
 app.use(morgan('dev'))
 app.use(express.json())
