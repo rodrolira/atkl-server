@@ -66,6 +66,12 @@ app.use(cors({
   exposedHeaders: ['Content-Type', 'Authorization'],
 }))
 
+app.use(express.static(path.join(__dirname, 'build')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'build', 'index.html'));
+});
+
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(cookieParser())
@@ -79,6 +85,10 @@ app.use('/api', contactFormRoutes)
 app.use('/api', genreRoutes)
 app.use('/api', rolesRouter)
 app.use('/api', discographyRoutes)
+
+app.get('/', (req, res) => {
+  res.send('Home Page');
+});
 
 
 // Middleware para manejo de rutas no encontradas
