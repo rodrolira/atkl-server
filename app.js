@@ -51,13 +51,11 @@ const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'htt
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Permite solicitudes de cualquier origen como Postman
-    if (!origin) {
-      return callback(null, true)
-    }
+    console.log('Origen de la solicitud:', origin); // Log para ver el origen
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true)
+    // Permite solicitudes de cualquier origen como Postman
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
       callback(new Error('No permitido por CORS'))
     }
@@ -65,30 +63,9 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'DELETE', 'PUT'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: 'Access-Control-Allow-Origin' // Agrega esta línea
+  exposedHeaders: ['Content-Type', 'Authorization'],
 }))
 
-// app.use(
-//   cors({
-//     origin: 'https://atkl.vercel.app',
-//     credentials: true,
-//     methods: ['GET', 'POST', 'DELETE', 'PUT'],
-//     // Agrega DELETE aquí si es necesario
-
-//     allowedHeaders: ['Content-Type', 'Authorization'],
-//     exposedHeaders: 'Access-Control-Allow-Origin' // Agrega esta línea
-//   })
-// )
-//  const corsOptions = {
-//    origin: 'http://localhost:5173',
-//    credentials: true,
-//    methods: ['GET', 'POST', 'DELETE', 'PUT'],
-//    // Agrega DELETE aquí si es necesario
-//    allowedHeaders: ['Content-Type', 'Authorization'],
-//  }
-//  app.use(
-//    cors(corsOptions)
-//  )
 app.use(morgan('dev'))
 app.use(express.json())
 app.use(cookieParser())
@@ -105,7 +82,7 @@ app.use('/api', discographyRoutes)
 
 
 // Middleware para manejo de errores
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.log(err)
   const status = err.status || 500
   const message = err.message || 'Something went wrong'
