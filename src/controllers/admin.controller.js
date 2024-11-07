@@ -76,7 +76,14 @@ export const loginAdmin = async (username, password) => {
     const token = createToken(admin.id)
     console.log('Generated token:', token) // Verificar el token en el servidor
 
-    return token
+    // Establecer la cookie
+    res.cookie('token', token, {
+      httpOnly: true, // No accesible por JavaScript
+      secure: process.env.NODE_ENV === 'production', // Habilitar para producción (HTTPS)
+      sameSite: 'Strict', // Evita el envío de la cookie en otros dominios
+      maxAge: 24 * 60 * 60 * 1000, // 1 día de duración
+    });
+
   } catch (error) {
     throw new Error(`Error logging in admin: ${error.message}`)
   }
@@ -96,7 +103,13 @@ export const profileAdmin = async (adminId) => {
   }
 }
 
-export const verifyTokenAdmin = async (token) => {
+export const verifyTokenAdmin = async (req, res) => {
+  const {token} = req.cookies.token
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token found' })
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
 
@@ -110,9 +123,9 @@ export const verifyTokenAdmin = async (token) => {
       throw new Error('Unauthorized');
     }
 
-    return admin;
+    res.status(200).json({ admin });
   } catch (error) {
-    throw new Error(`Error verifying token: ${error.message}`);
+    res.status(401).json({ message: `Error verifying token: ${error.message}` });
   }
 }
 
