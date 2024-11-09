@@ -97,7 +97,7 @@ export const profileAdmin = async (adminId) => {
 }
 
 export const verifyTokenAdmin = async (req, res) => {
-  const {token} = req.cookies.token
+  const token = req.cookies.token
 
   if (!token) {
     return res.status(401).json({ message: 'No token found' })
@@ -136,7 +136,7 @@ export const logoutAdmin = async (req, res) => {
 export const deleteAdmin = async (req, res) => {
   try {
     const { username } = req.params
-    const admin = await Admin.findByPk(username)
+    const admin = await Admin.findOne({ where: { username } })
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' })
     }

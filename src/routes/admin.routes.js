@@ -2,7 +2,6 @@
 
 import express from 'express'
 import * as adminController from '../controllers/admin.controller.js'
-import { verifyTokenAdmin } from '../middlewares/verifyTokenAdmin.js'
 
 const router = express.Router()
 
