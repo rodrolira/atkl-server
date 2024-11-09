@@ -75,14 +75,7 @@ export const loginAdmin = async (username, password) => {
 
     const token = createToken(admin.id)
     console.log('Generated token:', token) // Verificar el token en el servidor
-
-    // Establecer la cookie
-    res.cookie('token', token, {
-      httpOnly: true, // No accesible por JavaScript
-      secure: process.env.NODE_ENV === 'production', // Habilitar para producción (HTTPS)
-      sameSite: 'Strict', // Evita el envío de la cookie en otros dominios
-      maxAge: 24 * 60 * 60 * 1000, // 1 día de duración
-    });
+    return { token, admin };
 
   } catch (error) {
     throw new Error(`Error logging in admin: ${error.message}`)

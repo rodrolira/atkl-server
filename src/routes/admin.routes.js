@@ -36,8 +36,7 @@ router.post('/admin/register', async (req, res) => {
 router.post('/admin/login', async (req, res) => {
   try {
     const { username, password } = req.body
-    const token = await adminController.loginAdmin(username, password)
-    const admin = await adminController.findAdminByUsername(username)
+    const { token, admin } = await adminController.loginAdmin(username, password);
 
     res.cookie('token', token, {
       maxAge: 12 * 60 * 60 * 1000, // 12hrs
