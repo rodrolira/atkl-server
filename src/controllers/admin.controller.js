@@ -97,7 +97,7 @@ export const profileAdmin = async (adminId) => {
 }
 
 export const verifyTokenAdmin = async (req, res) => {
-  const token = req.cookies.token
+  const {token} = req.cookies
 
   if (!token) {
     return res.status(401).json({ message: 'No token found' })
