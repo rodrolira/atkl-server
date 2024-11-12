@@ -96,30 +96,21 @@ export const profileAdmin = async (adminId) => {
   }
 }
 
-export const verifyTokenAdmin = async (req, res) => {
-  const {token} = req.cookies
+export const verifyTokenAdmin = (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1]
 
   if (!token) {
-    return res.status(401).json({ message: 'No token found' })
+    return res.status(401).json({ message: 'No token provided' })
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.SECRET);
-
-    if (decoded.role !== 'admin') {
-      throw new Error('Unauthorized');
+  jwt.verify(token, process.env.SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ message: 'Unauthorized' })
     }
 
-    const admin = await Admin.findByPk(decoded.adminId);
-
-    if (!admin) {
-      throw new Error('Unauthorized');
-    }
-
-    res.status(200).json({ admin });
-  } catch (error) {
-    res.status(401).json({ message: `Error verifying token: ${error.message}` });
-  }
+    req.adminId = decoded.adminId
+    next()
+  })
 }
 
 
