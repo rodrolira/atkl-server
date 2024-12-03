@@ -30,7 +30,7 @@ export const addArtist = async (req, res) => {
     beatport_link,
   } = req.body;
 
-  const image = req.file ? `uploads\\${req.file.filename}` : null;
+  const imagePath = req.file ? `uploads\\${req.file.filename}` : undefined;
 
   if (!artist_name) {
     return res.status(400).json({ message: 'artist_name are required' });
@@ -39,7 +39,7 @@ export const addArtist = async (req, res) => {
   try {
     let newUserId = null; // Variable para almacenar el ID del nuevo usuario
     
-    // Solo crear un nuevo usario si email, username y password son proporcionados
+    // Solo crear un nuevo usuario si email, username y password son proporcionados
     if (email && username && password) {
     const newUser = await User.create({
       username,
@@ -54,7 +54,7 @@ export const addArtist = async (req, res) => {
       user_id: newUserId, // Esto puede ser null si no se crea un nuevo usuario
       email,
       bio,
-      image,
+      image: imagePath,
       bandcamp_link,
       facebook_link,
       instagram_link,
@@ -213,21 +213,32 @@ export const getArtists = async (req, res) => {
 export const getArtistById = async (req, res) => {
   const { id } = req.params;
 
+  if (!id || isNaN(Number(id))) {
+    return res.status(400).json({ message: 'Invalid or missing artist ID' });
+  }
+
   try {
     const artist = await Artist.findByPk(id, {
       include: [{ model: Role, as: 'Roles' }],
     });
     if (!artist) {
+      console.warn(`No artist found with ID: ${id}`);
       return res.status(404).json({ message: 'Artist not found' });
     }
     res.status(200).json(artist);
   } catch (error) {
+    console.error('Error fetching artist by ID:', error);
+    console.error(`Error fetching artist with ID ${id}:`, error);
     res.status(500).json({ message: error.message });
   }
 };
 
 export const getArtistReleases = async (req, res) => {
   const { id } = req.params;
+
+  if (!id || isNaN(Number(id))) {
+    return res.status(400).json({ message: 'Invalid or missing artist ID' });
+  }
 
   try {
     const artist = await Artist.findByPk(id, {
@@ -240,7 +251,7 @@ export const getArtistReleases = async (req, res) => {
 
     res.status(200).json(artist.releases);
   } catch (error) {
-    console.error('Error fetching artist releases:', error);
+    console.error(`Error fetching releases for artist ${id}:`, error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

@@ -5,12 +5,21 @@ import jwt from 'jsonwebtoken'
 import Admin from '../models/admin.model.js'
 import dotenv from 'dotenv'
 
-
 dotenv.config()
 
 const createToken = (adminId) => {
   return jwt.sign({ adminId, role: 'admin' }, process.env.SECRET, { expiresIn: '1d' })
 }
+
+const handleError = (res, error, message) => {
+  console.error(message, error);
+  res.status(500).json({ message: `${message}: ${error.message}` })
+}
+
+const findAdmin = async (criteria) => {
+  return await Admin.findOne({ where: criteria })
+}
+
 export const createAdmin = async ({ username, email, password }) => {
   const hashedPassword = await bcrypt.hash(password, 10)
   try {
@@ -24,30 +33,21 @@ export const createAdmin = async ({ username, email, password }) => {
   }
 }
 
-export const findAdminByEmail = async (email) => {
+const findAdminByField = async (field, value) => {
   try {
-    const admin = await Admin.findOne({ where: { email } })
+    const admin = await findAdmin({ [field]: value })
     if (!admin) {
       throw new Error('Admin not found')
     }
     return admin
   } catch (error) {
-    throw new Error(`Error finding admin by email: ${error.message}`)
+    throw new Error(`Error finding admin by ${field}: ${error.message}`)
   }
 }
 
-export const findAdminByUsername = async (username) => {
-  try {
-    const admin = await Admin.findOne({ where: { username } })
-    if (!admin) {
-      throw new Error('Admin not found')
-    }
-    return admin
-  } catch (error) {
-    throw new Error(`Error finding admin by username: ${error.message}`)
-  }
-}
+export const findAdminByEmail = (email) => findAdminByField('email', email)
 
+export const findAdminByUsername = (username) => findAdminByField('username', username)
 
 export const getAllAdmins = async () => {
   try {
@@ -59,22 +59,21 @@ export const getAllAdmins = async () => {
 
 export const loginAdmin = async (username, password) => {
   try {
-    const admin = await Admin.findOne({ where: { username } })
-
+    const admin = await findAdmin({ username });
     if (!admin) {
       console.log('Admin not found for username:', username);
       throw new Error('Admin not found')
     }
 
     const isMatch = await bcrypt.compare(password, admin.password)
-    console.log('Password match status:', isMatch); // Check if passwords match
+    console.log('Password match status:', isMatch);
 
     if (!isMatch) {
       throw new Error('Invalid credentials')
     }
 
     const token = createToken(admin.id)
-    console.log('Generated token:', token) // Verificar el token en el servidor
+    console.log('Generated token:', token)
     return { token, admin };
 
   } catch (error) {
@@ -97,7 +96,7 @@ export const profileAdmin = async (adminId) => {
 }
 
 export const verifyTokenAdmin = (req, res, next) => {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1]
+  const token = req.cookies.token ?? req.headers.authorization?.split(' ')[1]
 
   if (!token) {
     return res.status(401).json({ message: 'No token provided' })
@@ -113,16 +112,14 @@ export const verifyTokenAdmin = (req, res, next) => {
   })
 }
 
-
 export const logoutAdmin = async (req, res) => {
   try {
     res.clearCookie('token')
     res.status(200).json({ message: 'Logout successful' })
   } catch (error) {
-    res.status(500).json({ message: `Error logging out: ${error.message}` })
+    handleError(res, error, 'Error logging out')
   }
 }
-
 
 export const deleteAdmin = async (req, res) => {
   try {
@@ -131,7 +128,6 @@ export const deleteAdmin = async (req, res) => {
     if (!admin) {
       return res.status(404).json({ message: 'Admin not found' })
     }
-    // Eliminar el admin de la base de datos
     await Admin.destroy({
       where: {
         username
@@ -139,7 +135,6 @@ export const deleteAdmin = async (req, res) => {
     })
     res.status(200).json({ message: 'Admin deleted successfully' })
   } catch (error) {
-    console.error('Error deleting admin:', error)
-    res.status(500).json({ message: 'Server Error' })
+    handleError(res, error, 'Error deleting admin')
   }
 }
