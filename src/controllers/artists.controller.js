@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import ArtistRoles from '../models/artist_role.model.js';
 import ReleaseArtist from '../models/release_artist.model.js';
+import cloudinary from '../../config/cloudinary.js';
 
 dotenv.config();
 
@@ -30,7 +31,7 @@ export const addArtist = async (req, res) => {
     beatport_link,
   } = req.body;
 
-  const imagePath = req.file ? `uploads\\${req.file.filename}` : undefined;
+  const imagePath = req.file ? req.file.path : undefined; // URL de Cloudinary
 
   if (!artist_name) {
     return res.status(400).json({ message: 'artist_name are required' });

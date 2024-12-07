@@ -2,6 +2,7 @@
 import Release from '../models/release.model.js'
 import Artist from '../models/artist.model.js' // Importa el modelo Artist
 import Genre from '../models/genre.model.js' // Importa el modelo Genre
+import cloudinary from '../../config/cloudinary.js'
 
 export const addRelease = async (req, res) => {
   const {
@@ -10,70 +11,69 @@ export const addRelease = async (req, res) => {
     description,
     genre_id,
     release_type,
-    artist_id, // Este debería ser un array
+    artist_id,
     bandcamp_link,
     beatport_link,
     spotify_link,
     apple_music_link,
     youtube_link,
     soundcloud_link,
-  } = req.body
-  // Verifica si hay un archivo subido para la imagen de portada
-  const cover_image_url = req.file ? req.file.path : null
-
-  // Verifica que los campos obligatorios estén presentes
-  if (
-    !title ||
-    !genre_id
-  ) {
-    return res.status(400).json({
-      message:
-        'title, genre_id are required',
-    })
-  }
+  } = req.body;
 
   try {
+    // Subir imagen a Cloudinary si está presente
+    let cover_image_url = null;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'releases',
+        use_filename: true,
+      });
+      cover_image_url = result.secure_url; // URL segura de la imagen subida
+    }
+
+    // Validar campos obligatorios
+    if (!title || !genre_id) {
+      return res.status(400).json({ message: 'title and genre_id are required' });
+    }
+
     // Crear el release
     const newRelease = await Release.create({
       title,
       release_date,
       description,
       genre_id,
-      cover_image_url,
       release_type,
+      cover_image_url,
       bandcamp_link,
       beatport_link,
       spotify_link,
       apple_music_link,
       youtube_link,
       soundcloud_link,
-    })
+    });
 
-    // Asocia los artistas con el lanzamiento
+    // Asociar artistas con el lanzamiento
     if (artist_id && artist_id.length > 0) {
-      // Make sure each entry in artist_id is an integer
-      const validArtistIds = artist_id.map((id) => parseInt(id)).filter((id) => !isNaN(id))
-      await newRelease.setArtists(validArtistIds)
+      const validArtistIds = artist_id.map((id) => parseInt(id)).filter((id) => !isNaN(id));
+      await newRelease.setArtists(validArtistIds);
     }
 
-    // Busca el lanzamiento con los artistas asociados
+    // Obtener el lanzamiento con los artistas asociados
     const releaseWithArtists = await Release.findOne({
       where: { id: newRelease.id },
       include: {
         model: Artist,
         as: 'artists',
         attributes: ['id', 'artist_name'],
-      }, // Incluye los artistas
+      },
     });
 
-
-    res.status(201).json(releaseWithArtists)
+    res.status(201).json(releaseWithArtists);
   } catch (error) {
-    // Handle errors
-    console.error('Error adding release:', error)
-    return res.status(500).json({ message: 'Failed to add release' })
+    console.error('Error adding release:', error);
+    res.status(500).json({ message: 'Failed to add release', error: error.message });
   }
-}
+};
 
 export const getReleases = async (req, res) => {
   try {
@@ -121,7 +121,7 @@ export const getReleaseById = async (req, res) => {
 }
 
 export const updateRelease = async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   const {
     title,
     release_date,
@@ -135,26 +135,25 @@ export const updateRelease = async (req, res) => {
     apple_music_link,
     youtube_link,
     soundcloud_link,
-  } = req.body
-
-  // Obtener el cover_image_url desde el archivo subido
-  const cover_image_url = req.file ? req.file.path : null;
-
-  // Validar que el título y otros campos necesarios estén presentes
-  if (
-    !title ||
-    !artist_id ||
-    artist_id.length === 0
-  ) {
-    return res
-      .status(400)
-      .json({ message: 'title, release_date, and at least one artist_id are required' })
-  }
-  console.log(`Updating release with ID: ${id}`)
-  console.log('Update data:', req.body) // Log para verificar los datos recibidos
+  } = req.body;
 
   try {
-    // Actualizar el release en la base de datos
+    // Subir nueva imagen a Cloudinary si está presente
+    let cover_image_url = null;
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'releases',
+        use_filename: true,
+      });
+      cover_image_url = result.secure_url; // URL segura de la nueva imagen subida
+    }
+
+    // Validar campos obligatorios
+    if (!title || !artist_id || artist_id.length === 0) {
+      return res.status(400).json({ message: 'title, release_date, and at least one artist_id are required' });
+    }
+
+    // Actualizar el release
     const [affectedCount, [updatedRelease]] = await Release.update(
       {
         title,
@@ -172,27 +171,26 @@ export const updateRelease = async (req, res) => {
       },
       {
         where: { id },
-        returning: true, // Devolver el registro actualizado
+        returning: true,
       }
-    )
+    );
 
-    // Verificar si se actualizó algún registro
     if (affectedCount === 0) {
-      return res.status(404).json({ error: 'Release not found' });
+      return res.status(404).json({ message: 'Release not found' });
     }
 
-    // Asocia los artistas con el lanzamiento
+    // Asociar artistas con el lanzamiento
     if (artist_id && artist_id.length > 0) {
-      await updatedRelease.setArtists(artist_id)
+      const validArtistIds = artist_id.map((id) => parseInt(id)).filter((id) => !isNaN(id));
+      await updatedRelease.setArtists(validArtistIds);
     }
 
-
-    res.status(200).json(updatedRelease) // Devuelve el primer registro actualizado
+    res.status(200).json(updatedRelease);
   } catch (error) {
-    console.error('Error updating release:', error)
-    res.status(500).json({ message: error.message })
+    console.error('Error updating release:', error);
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
 export const deleteRelease = async (req, res) => {
   try {

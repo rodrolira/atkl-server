@@ -1,5 +1,8 @@
 // routes/artists.routes.js
 import express from 'express'
+import multer from 'multer'
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../../config/cloudinary.js';
 import {
   getArtists,
   addArtist,
@@ -8,20 +11,21 @@ import {
   getArtistById,
   getArtistReleases,
 } from '../controllers/artists.controller.js'
-import multer from 'multer'
+
+
 const router = express.Router()
 
-// Configuración de multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/') // Define dónde se almacenarán los archivos
+// Configuración de CloudinaryStorage para multer
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'artists',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
   },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}_${file.originalname}`) // Define el nombre del archivo
-  },
-})
+});
 
-const upload = multer({ storage })
+const upload = multer({ storage });
 
 router.get('/artists', getArtists)
 router.get('/artists/:id', getArtistById)

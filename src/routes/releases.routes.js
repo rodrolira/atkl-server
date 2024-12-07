@@ -1,34 +1,36 @@
-// routes/release.routes.js
-import express from 'express'
-import multer from 'multer' // Importa multer para manejar la carga de archivos
+import express from 'express';
+import multer from 'multer';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../../config/cloudinary.js';
 import {
   addRelease,
   getReleases,
   getReleaseById,
   updateRelease,
   deleteRelease,
-} from '../controllers/releases.controller.js'
-const router = express.Router()
+} from '../controllers/releases.controller.js';
 
-// Configuración de multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/') // Define dónde se almacenarán los archivos
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}_${file.originalname}`) // Define el nombre del archivo
-  },
-})
+const router = express.Router();
 
-const upload = multer({ storage })
+// Configuración de CloudinaryStorage para multer
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'releases',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
+  },
+});
+
+const upload = multer({ storage });
 
 // Rutas
-router.get('/releases', getReleases)
-router.get('/releases/:id', getReleaseById)
+router.get('/releases', getReleases);
+router.get('/releases/:id', getReleaseById);
 
-router.post('/releases', upload.single('cover_image_url'), addRelease)
+router.post('/releases', upload.single('cover_image_url'), addRelease);
 
-router.put('/releases/:id', upload.single('cover_image_url'), updateRelease)
-router.delete('/releases/:id', deleteRelease)
+router.put('/releases/:id', upload.single('cover_image_url'), updateRelease);
+router.delete('/releases/:id', deleteRelease);
 
-export default router
+export default router;

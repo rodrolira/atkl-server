@@ -13,8 +13,9 @@ import genreRoutes from './src/routes/genre.routes.js'
 import contactFormRoutes from './src/routes/contact-form.routes.js'
 import rolesRouter from './src/routes/roles.routes.js'
 import discographyRoutes from './src/routes/discography.routes.js'
-import postgres from 'postgres'
 import multer from 'multer'
+import cloudinary from './config/cloudinary.js'
+import {CloudinaryStorage} from 'multer-storage-cloudinary'
 import path from 'path'
 import { fileURLToPath } from 'url';
 
@@ -28,19 +29,15 @@ const __dirname = path.dirname(__filename);
 
 const app = express()
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/')
+// Configuración de CloudinaryStorage
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'uploads', // Carpeta en Cloudinary donde se guardarán las imágenes
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'], // Formatos permitidos
+    public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
   },
-  filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname)
-    const filename = `${Date.now()}-${file.originalname}`;
-    cb(null, filename)
-
-    console.log(`File saved to: ${filename}`);
-
-  },
-})
+});
 
 const upload = multer({ storage })
 // Middleware para servir archivos estáticos
@@ -80,6 +77,21 @@ app.use('/api', contactFormRoutes)
 app.use('/api', genreRoutes)
 app.use('/api', rolesRouter)
 app.use('/api', discographyRoutes)
+
+// Endpoint de ejemplo para subir imágenes
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  try {
+    const file = req.file;
+    console.log('Archivo subido:', file);
+    res.status(200).json({
+      message: 'Imagen subida exitosamente',
+      imageUrl: file.path, // URL de la imagen en Cloudinary
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al subir la imagen' });
+  }
+});
 
 app.get('/', (req, res) => {
   res.send('Home Page');
