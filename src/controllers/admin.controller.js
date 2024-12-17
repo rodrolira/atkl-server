@@ -7,29 +7,45 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const createToken = (adminId) => {
-  return jwt.sign({ adminId, role: 'admin' }, process.env.SECRET, { expiresIn: '1d' })
-}
+export const createToken = (adminId) => {
+  if (!adminId) {
+    throw new Error('adminId is required');
+  }
+
+  const payload = {
+    adminId: adminId,
+    role: 'admin',
+  };
+
+  console.log(process.env.SECRET)
+
+  const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
+  return token;
+};
 
 const handleError = (res, error, message) => {
   console.error(message, error);
   res.status(500).json({ message: `${message}: ${error.message}` })
 }
 
-const findAdmin = async (criteria) => {
+export const findAdmin = async (criteria) => {
   return await Admin.findOne({ where: criteria })
 }
 
-export const createAdmin = async ({ username, email, password }) => {
-  const hashedPassword = await bcrypt.hash(password, 10)
+export const createAdmin = async (adminData) => {
   try {
-    return await Admin.create({
-      username,
-      email,
+    const hashedPassword = await bcrypt.hash(adminData.password, 10)
+
+    const newAdmin = await Admin.create({
+      ...adminData,
       password: hashedPassword,
     });
+    return newAdmin;
   } catch (error) {
-    throw new Error(`Error creating admin: ${error.message}`)
+    if (error.message.includes('Hashing failed')) {
+      throw new Error('Error creating admin: Hashing failed');
+    }
+    throw new Error(`Error creating admin: ${error.message}`);
   }
 }
 
