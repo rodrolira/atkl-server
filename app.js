@@ -13,11 +13,37 @@ import genreRoutes from './src/routes/genre.routes.js'
 import contactFormRoutes from './src/routes/contact-form.routes.js'
 import rolesRouter from './src/routes/roles.routes.js'
 import discographyRoutes from './src/routes/discography.routes.js'
+import uploadRoutes from './src/routes/upload.routes.js'
 import multer from 'multer'
-import cloudinary from './config/cloudinary.js'
-import {CloudinaryStorage} from 'multer-storage-cloudinary'
 import path from 'path'
 import { fileURLToPath } from 'url';
+// import {
+//   SecretsManagerClient,
+//   GetSecretValueCommand,
+// } from "@aws-sdk/client-secrets-manager";
+
+// const secret_name = "prod/rodro/atkl";
+
+// const client = new SecretsManagerClient({
+//   region: "us-east-1",
+// });
+
+// let response;
+
+// try {
+//   response = await client.send(
+//     new GetSecretValueCommand({
+//       SecretId: secret_name,
+//       VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
+//     })
+//   );
+// } catch (error) {
+//   // For a list of exceptions thrown, see
+//   // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+//   throw error;
+// }
+
+// const secret = response.SecretString;
 
 dotenv.config()
 
@@ -29,19 +55,16 @@ const __dirname = path.dirname(__filename);
 
 const app = express()
 
-// Configuración de CloudinaryStorage
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'uploads', // Carpeta en Cloudinary donde se guardarán las imágenes
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'], // Formatos permitidos
-    public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
-  },
-});
+// // Configuración de CloudinaryStorage
+// const storage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//     folder: 'uploads', // Carpeta en Cloudinary donde se guardarán las imágenes
+//     allowed_formats: ['jpg', 'jpeg', 'png', 'gif'], // Formatos permitidos
+//     public_id: (req, file) => `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
+//   },
+// });
 
-const upload = multer({ storage })
-// Middleware para servir archivos estáticos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Lista de orígenes permitidos producción y desarrollo
 const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'https://atkl.onrender.com','http://localhost:42423']
@@ -76,22 +99,10 @@ app.use('/api', adminRoutes)
 app.use('/api', contactFormRoutes)
 app.use('/api', genreRoutes)
 app.use('/api', rolesRouter)
-app.use('/api', discographyRoutes)
+app.use('/api', discographyRoutes)  
+app.use('/api', uploadRoutes)
 
-// Endpoint de ejemplo para subir imágenes
-app.post('/api/upload', upload.single('image'), (req, res) => {
-  try {
-    const file = req.file;
-    console.log('Archivo subido:', file);
-    res.status(200).json({
-      message: 'Imagen subida exitosamente',
-      imageUrl: file.path, // URL de la imagen en Cloudinary
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al subir la imagen' });
-  }
-});
+
 
 app.get('/', (req, res) => {
   res.send('Home Page');

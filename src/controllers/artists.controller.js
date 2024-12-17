@@ -9,53 +9,25 @@ import dotenv from 'dotenv';
 import ArtistRoles from '../models/artist_role.model.js';
 import ReleaseArtist from '../models/release_artist.model.js';
 import cloudinary from '../../config/cloudinary.js';
-
+import { uploadFile } from '../../s3.js';
 dotenv.config();
 
 export const addArtist = async (req, res) => {
-  const {
-    artist_name,
-    email,
-    username,
-    roleIds,
-    password,
-    bio,
-    bandcamp_link,
-    facebook_link,
-    instagram_link,
-    soundcloud_link,
-    twitter_link,
-    youtube_link,
-    spotify_link,
-    apple_music_link,
-    beatport_link,
-  } = req.body;
+  const form = new formidable.IncomingForm();
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.error("Error al procesar el archivo:", err);
+      return res.status(500).json({ error: "Error al procesar el archivo" });
+    }
 
-  const imagePath = req.file ? req.file.path : undefined; // URL de Cloudinary
 
-  if (!artist_name) {
-    return res.status(400).json({ message: 'artist_name are required' });
-  }
-
-  try {
-    let newUserId = null; // Variable para almacenar el ID del nuevo usuario
-    
-    // Solo crear un nuevo usuario si email, username y password son proporcionados
-    if (email && username && password) {
-    const newUser = await User.create({
-      username,
-      email,
-      password: await bcrypt.hash(password, 10),
-    });
-    newUserId = newUser.id;
-    } 
-
-    const newArtist = await Artist.create({
+    const {
       artist_name,
-      user_id: newUserId, // Esto puede ser null si no se crea un nuevo usuario
       email,
+      username,
+      roleIds,
+      password,
       bio,
-      image: imagePath,
       bandcamp_link,
       facebook_link,
       instagram_link,
@@ -65,43 +37,88 @@ export const addArtist = async (req, res) => {
       spotify_link,
       apple_music_link,
       beatport_link,
-    });
+    } = fields;
 
-    // Verificar y convertir `roleIds` en array si es necesario
-    const roleIdsArray = Array.isArray(roleIds)
-      ? roleIds
-      : typeof roleIds === 'string'
-        ? roleIds.split(',').map((id) => parseInt(id.trim(), 10)) // Convertir string a array de números
-        : []; // Si `roleIds` es nulo o undefined, usar array vacío
+    // Verificar el archivo subido
+    const file = files.image; // Nombre del campo usado para el archivo
+    let imageUrl = null;
 
-
-    // Asociar roles con el artista si se proporciona roleIds
-    if (roleIdsArray.length > 0) {
-      const artistRoles = roleIdsArray.map((roleId) => ({
-        artist_id: newArtist.id,
-        role_id: roleId,
-      }));
-      await ArtistRoles.bulkCreate(artistRoles);
+    if (file) {
+      const key = `${Date.now()}-${file.originalFilename.replace(/\s+/g, "-")}`;
+      try {
+        imageUrl = await uploadFile(file, key); // Subir la imagen y obtener la URL
+      } catch (uploadError) {
+        console.error("Error al subir la imagen a S3:", uploadError);
+        return res.status(500).json({ error: "Error al subir la imagen" });
+      }
     }
 
+    try {
+      let newUserId = null; // Variable para almacenar el ID del nuevo usuario
 
-    const token = jwt.sign({ email }, process.env.SECRET, { expiresIn: '12h' });
-    res.cookie('token', token, { httpOnly: true });
+      // Solo crear un nuevo usuario si email, username y password son proporcionados
+      if (email && username && password) {
+        const newUser = await User.create({
+          username,
+          email,
+          password: await bcrypt.hash(password, 10),
+        });
+        newUserId = newUser.id;
+      }
 
-    console.log('New artist created:', newArtist);
-    res.status(201).json(newArtist);
-  } catch (error) {
-    console.error(`Error adding artist: ${error.message}`, error);
-    return res.status(500).json({ message: error.message, details: error.stack });
-  }
-};
+      const newArtist = await Artist.create({
+        artist_name,
+        user_id: newUserId, // Esto puede ser null si no se crea un nuevo usuario
+        email,
+        bio,
+        image: imageUrl,
+        bandcamp_link,
+        facebook_link,
+        instagram_link,
+        soundcloud_link,
+        twitter_link,
+        youtube_link,
+        spotify_link,
+        apple_music_link,
+        beatport_link,
+      });
+
+      // Verificar y convertir `roleIds` en array si es necesario
+      const roleIdsArray = Array.isArray(roleIds)
+        ? roleIds
+        : typeof roleIds === 'string'
+          ? roleIds.split(',').map((id) => parseInt(id.trim(), 10)) // Convertir string a array de números
+          : []; // Si `roleIds` es nulo o undefined, usar array vacío
+
+
+      // Asociar roles con el artista si se proporciona roleIds
+      if (roleIdsArray.length > 0) {
+        const artistRoles = roleIdsArray.map((roleId) => ({
+          artist_id: newArtist.id,
+          role_id: roleId,
+        }));
+        await ArtistRoles.bulkCreate(artistRoles);
+      }
+
+
+      const token = jwt.sign({ email }, process.env.SECRET, { expiresIn: '12h' });
+      res.cookie('token', token, { httpOnly: true });
+
+      console.log('New artist created:', newArtist);
+      res.status(201).json(newArtist);
+    } catch (error) {
+      console.error(`Error adding artist: ${error.message}`, error);
+      return res.status(500).json({ message: error.message, details: error.stack });
+    }
+  });
+}
 
 export const updateArtist = async (req, res) => {
   const { artistId } = req.params;
   let { roleIds, ...updateData } = req.body;
 
   // Verificar si hay un archivo subido para la imagen 
-  const imagePath = req.file ? `uploads\\${req.file.filename}` : undefined;
+  const imagePath = req.file ? `uploads\\${req.file.filename}` : uploadFile(req, res);
 
   if (imagePath) {
     updateData.image = imagePath;
@@ -130,8 +147,8 @@ export const updateArtist = async (req, res) => {
         roleIds = [parseInt(roleIds, 10)];
       }
 
-            // Elimina roles existentes para este artista
-            await ArtistRoles.destroy({ where: { artist_id: artistId } });
+      // Elimina roles existentes para este artista
+      await ArtistRoles.destroy({ where: { artist_id: artistId } });
 
       // Agrega los nuevos roles
       const rolesToAdd = roleIds.map(roleId => ({ artist_id: artistId, role_id: roleId }));
