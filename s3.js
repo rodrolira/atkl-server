@@ -17,8 +17,6 @@ const client = new S3Client({
 
     },
 });
-console.log('AWS_PUBLIC_KEY:', process.env.AWS_PUBLIC_KEY);
-console.log('AWS_SECRET_KEY:', process.env.AWS_SECRET_KEY);
 
 
 async function uploadFile(file) {

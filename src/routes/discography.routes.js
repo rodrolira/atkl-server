@@ -12,7 +12,7 @@ router.post('/discography/bulk', async (req, res) => {
         if (!Array.isArray(tracks)) {
             return res.status(400).json({ error: 'Los datos deben ser una lista de registros.' })
         }
-         // Verificar y limpiar los datos antes de insertarlos
+        // Verificar y limpiar los datos antes de insertarlos
         const cleanedTracks = tracks.map(track => ({
             title: track.title,
             artist: track.artist,
@@ -56,7 +56,9 @@ router.get('/discography', async (req, res) => {
 router.get('/discography/:id', async (req, res) => {
     try {
         const track = await Discography.findByPk(req.params.id)
-        if (!track) return res.status(404).json({ error: 'Track not found' })
+        if (!track) {
+            return res.status(404).json({ error: 'Track not found' })
+        }
         res.status(200).json(track)
     } catch (error) {
         res.status(500).json({ error: error.message })

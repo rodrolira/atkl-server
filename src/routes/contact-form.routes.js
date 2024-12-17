@@ -1,5 +1,8 @@
 import express from 'express'
 import nodemailer from 'nodemailer'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const router = express.Router()
 
@@ -10,13 +13,13 @@ router.post('/submit-form', async (req, res) => {
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: 'atkl.records@gmail.com',
+                user: process.env.EMAIL,
                 pass: 'njyy jaob csid scmt'
             }
         })
 
         const mailOptions = {
-            from: 'atkl.records@gmail.com',
+            from: process.env.EMAIL,
             to: email,
             subject: 'Nuevo formulario de contacto',
             text: `Nombre: ${name}\nCorreo electrónico: ${email}\nDescripción: ${description}`
