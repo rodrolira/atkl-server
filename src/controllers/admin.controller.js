@@ -17,7 +17,6 @@ export const createToken = (adminId) => {
     role: 'admin',
   };
 
-  console.log(process.env.SECRET)
 
   const token = jwt.sign(payload, process.env.SECRET, { expiresIn: '1h' });
   return token;
