@@ -6,7 +6,7 @@ module.exports = {
     const tableInfo = await queryInterface.describeTable('releases')
     if (!tableInfo.release_type) {
       await queryInterface.addColumn('releases', 'release_type', {
-        type: Sequelize.ENUM('Album', 'EP', 'Single', 'V.A'),
+        type: Sequelize.ENUM('Album', 'EP', 'Single', 'V.A', 'Compilation'),
         allowNull: false,
       })
     }

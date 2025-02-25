@@ -33,7 +33,7 @@ const Release = sequelize.define(
       allowNull: true,
     },
     release_type: {
-      type: DataTypes.ENUM('Album', 'EP', 'Single', 'V.A'),
+      type: DataTypes.ENUM('Album', 'EP', 'Single', 'V.A', 'Compilation'),
       allowNull: false,
     },
     bandcamp_link: {
