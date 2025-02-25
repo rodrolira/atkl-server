@@ -67,7 +67,7 @@ const app = express()
 
 
 // Lista de orígenes permitidos producción y desarrollo
-const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'https://atkl.onrender.com','http://localhost:42423']
+const allowedOrigins = ['http://localhost:5173', 'https://atkl.vercel.app', 'https://atkl.onrender.com', 'http://localhost:42423']
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -99,7 +99,7 @@ app.use('/api', adminRoutes)
 app.use('/api', contactFormRoutes)
 app.use('/api', genreRoutes)
 app.use('/api', rolesRouter)
-app.use('/api', discographyRoutes)  
+app.use('/api', discographyRoutes)
 app.use('/api', uploadRoutes)
 
 
@@ -117,7 +117,7 @@ app.use((req, res) => {
 // Middleware para manejar errores
 app.use((err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
-  console.error(err.stack); // Log del error para depuración
+    console.error(err.stack); // Log del error para depuración
   }
   res.status(err.status || 500).json({
     error: {
@@ -125,6 +125,22 @@ app.use((err, req, res, next) => {
     },
   });
 });
+
+app.use((req, res, next) => {
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; object-src 'none'");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=()");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+  res.setHeader("Clear-Site-Data", '"cache", "cookies", "storage", "executionContexts"');
+  next();
+});
+
 
 
 export default app
